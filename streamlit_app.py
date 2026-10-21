@@ -14,7 +14,6 @@ st.write(
     "Aplicación académica para estudiar el volumen de una columna "
     "circular con radio variable mediante cálculo integral."
 )
-
 st.sidebar.header("Dimensiones de la columna")
 
 H = st.sidebar.number_input(
@@ -131,5 +130,170 @@ st.info(
     "del precio supuesto por el usuario. La aplicación no "
     "verifica la capacidad resistente ni la seguridad estructural "
     "de la columna."
+)
+# ==========================================
+# MODULO ESTRUCTURAL BASICO
+# ==========================================
+
+st.divider()
+st.header("Analisis estructural preliminar")
+
+st.write(
+    "Estudio academico de una columna de concreto "
+    "con seccion circular variable sometida a carga axial."
+)
+
+st.warning(
+    "Este modulo es educativo. No determina la capacidad "
+    "resistente ni certifica la seguridad estructural "
+    "de una columna real."
+)
+
+# Datos introducidos por el usuario
+st.subheader("1. Parametros de analisis")
+
+carga_axial = st.number_input(
+    "Carga axial externa aplicada (kN)",
+    min_value=0.0,
+    max_value=10000.0,
+    value=500.0,
+    step=25.0
+)
+
+peso_unitario = st.number_input(
+    "Peso unitario del concreto (kN/m3)",
+    min_value=0.0,
+    max_value=30.0,
+    value=24.0,
+    step=0.5
+)
+
+fc = st.number_input(
+    "Resistencia especificada del concreto f'c (MPa)",
+    min_value=1.0,
+    max_value=100.0,
+    value=28.0,
+    step=1.0
+)
+
+# Geometria de las secciones
+area_base = np.pi * rb**2
+area_superior = np.pi * rt**2
+
+# Peso propio de la columna
+peso_propio = peso_unitario * V
+
+# Fuerza axial estimada en cada extremo.
+# Se supone una carga externa aplicada en la parte superior
+# y se considera el peso propio distribuido de la columna.
+fuerza_superior = carga_axial
+fuerza_base = carga_axial + peso_propio
+
+# Esfuerzo promedio: kN/m2 convertido a MPa.
+# 1 MPa = 1000 kN/m2.
+if area_base > 0 and area_superior > 0:
+    esfuerzo_base = fuerza_base / area_base / 1000
+    esfuerzo_superior = fuerza_superior / area_superior / 1000
+else:
+    esfuerzo_base = 0.0
+    esfuerzo_superior = 0.0
+
+# Resultados
+st.subheader("2. Resultados")
+
+m1, m2, m3 = st.columns(3)
+
+m1.metric(
+    "Peso propio",
+    f"{peso_propio:.2f} kN"
+)
+
+m2.metric(
+    "Fuerza axial en la base",
+    f"{fuerza_base:.2f} kN"
+)
+
+m3.metric(
+    "Fuerza axial en la parte superior",
+    f"{fuerza_superior:.2f} kN"
+)
+
+st.subheader("3. Esfuerzos promedio")
+
+r1, r2 = st.columns(2)
+
+r1.metric(
+    "Esfuerzo promedio en la base",
+    f"{esfuerzo_base:.3f} MPa"
+)
+
+r2.metric(
+    "Esfuerzo promedio superior",
+    f"{esfuerzo_superior:.3f} MPa"
+)
+
+st.write(
+    "El esfuerzo promedio se calcula como la fuerza axial "
+    "dividida entre el area de la seccion transversal."
+)
+
+st.latex(r"\sigma = \frac{N}{A}")
+
+# Tabla comparativa
+import pandas as pd
+
+tabla_estructural = pd.DataFrame({
+    "Seccion": ["Base", "Superior"],
+    "Radio (m)": [rb, rt],
+    "Area (m2)": [area_base, area_superior],
+    "Fuerza axial (kN)": [fuerza_base, fuerza_superior],
+    "Esfuerzo promedio (MPa)": [
+        esfuerzo_base, esfuerzo_superior
+    ]
+})
+
+st.dataframe(
+    tabla_estructural,
+    use_container_width=True,
+    hide_index=True
+)
+
+# Interpretacion
+st.subheader("4. Interpretacion de resultados")
+
+if area_superior < area_base:
+    st.write(
+        "La seccion superior tiene menor area que la base. "
+        "Bajo la misma fuerza axial, una menor area produce "
+        "un mayor esfuerzo promedio."
+    )
+elif area_superior > area_base:
+    st.write(
+        "La seccion superior tiene mayor area que la base. "
+        "Para una misma fuerza axial, su esfuerzo promedio "
+        "seria menor."
+    )
+else:
+    st.write(
+        "Las dos secciones tienen la misma area. "
+        "La variacion del esfuerzo depende de la fuerza axial "
+        "que actua en cada seccion."
+    )
+
+st.subheader("5. Alcance y limitaciones")
+
+st.write(
+    f"La resistencia especificada del concreto introducida "
+    f"es f'c = {fc:.1f} MPa. Este dato caracteriza el material, "
+    "pero no basta para calcular la capacidad resistente "
+    "de la columna."
+)
+
+st.write(
+    "El analisis no incluye acero de refuerzo, excentricidad, "
+    "momentos flectores, esbeltez, efectos de segundo orden, "
+    "combinaciones de carga ni verificaciones normativas. "
+    "Por tanto, los resultados son estimaciones academicas "
+    "de esfuerzos promedio y no constituyen un diseno estructural."
 )
 
